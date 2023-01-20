@@ -739,9 +739,12 @@ class _KVStore:
             return next(item, (None,))[0]
 
     def set(self, key: str, value: str) -> None:
-        with self._cache_mutex:
-            self.conn.execute('replace into "kv" (key, value) values (?,?)', (key, value))
-            self.conn.commit()
+        if value is None:
+            self.delete(key)
+        else:
+            with self._cache_mutex:
+                self.conn.execute('replace into "kv" (key, value) values (?,?)', (key, value))
+                self.conn.commit()
 
     def bulk_set(self, kvdata: Dict[str, str]):
         records = tuple(i for i in kvdata.items())
@@ -758,10 +761,8 @@ class _KVStore:
         """ Print entire database content """
         with self._cache_mutex:
             data = self.conn.execute('select * from kv')
-            # print(data.fetchall())
             tzs = {}
             for r in data.fetchall():
-                # print(r)
                 tkr = r[0]
                 tz = r[1]
                 if tz is None:
@@ -773,7 +774,6 @@ class _KVStore:
             for tz in tzs:
                 # One timezone per line, but print tickers compact
                 print(tz, '-', tzs[tz])
-
 
 
 class _TzCacheException(Exception):
@@ -832,10 +832,13 @@ class _TzCache:
         except _pd.errors.EmptyDataError:
             _os.remove(old_cache_file_path)
         else:
-            try:
-                self.tz_db.bulk_set(df.to_dict()['Tz'])
-            except Exception as e:
-                print("Migrating old TZ cache to sqlite failed:", str(e))
+            df = df[~df["Tz"].isna()]
+            df = df[~df["Tz"]=='']
+            if not df.empty:
+                try:
+                    self.tz_db.bulk_set(df.to_dict()['Tz'])
+                except Exception as e:
+                    print("Migrating old TZ cache to sqlite failed:", str(e))
 
             _os.remove(old_cache_file_path)
 
