@@ -754,6 +754,27 @@ class _KVStore:
             self.conn.execute('delete from "kv" where key=?', (key,))
             self.conn.commit()
 
+    def print(self):
+        """ Print entire database content """
+        with self._cache_mutex:
+            data = self.conn.execute('select * from kv')
+            # print(data.fetchall())
+            tzs = {}
+            for r in data.fetchall():
+                # print(r)
+                tkr = r[0]
+                tz = r[1]
+                if tz is None:
+                    tz = 'None'
+                if not tz in tzs:
+                    tzs[tz] = [tkr]
+                else:
+                    tzs[tz].append(tkr)
+            for tz in tzs:
+                # One timezone per line, but print tickers compact
+                print(tz, '-', tzs[tz])
+
+
 
 class _TzCacheException(Exception):
     pass
