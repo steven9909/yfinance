@@ -757,6 +757,11 @@ class _KVStore:
             self.conn.execute('delete from "kv" where key=?', (key,))
             self.conn.commit()
 
+    def to_pandas(self):
+        with self._cache_mutex:
+            df = _pd.read_sql("select * from kv", self.conn, index_col="key")
+            return df
+
     def print(self):
         """ Print entire database content """
         with self._cache_mutex:
