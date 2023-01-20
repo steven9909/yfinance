@@ -1186,7 +1186,11 @@ class TickerBase:
 
             if utils.is_valid_timezone(tz):
                 # info fetch is relatively slow so cache timezone
-                cache.store(self.ticker, tz)
+                try:
+                    cache.store(self.ticker, tz)
+                except Exception as e:
+                    print(f"{self.ticker}: Failed to store tz='{tz}' in sqlite cache.", str(e))
+                    pass
             else:
                 tz = None
 

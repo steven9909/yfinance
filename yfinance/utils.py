@@ -730,7 +730,11 @@ class _KVStore:
 
     def get(self, key: str) -> Union[str, None]:
         """Get value for key if it exists else returns None"""
-        item = self.conn.execute('select value from "kv" where key=?', (key,))
+        try:
+            item = self.conn.execute('select value from "kv" where key=?', (key,))
+        except _sqlite3.IntegrityError as e:
+            self.delete(key)
+            return None
         if item:
             return next(item, (None,))[0]
 
@@ -807,7 +811,11 @@ class _TzCache:
         except _pd.errors.EmptyDataError:
             _os.remove(old_cache_file_path)
         else:
-            self.tz_db.bulk_set(df.to_dict()['Tz'])
+            try:
+                self.tz_db.bulk_set(df.to_dict()['Tz'])
+            except Exception as e:
+                print("Migrating old TZ cache to sqlite failed:", str(e))
+
             _os.remove(old_cache_file_path)
 
 
