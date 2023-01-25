@@ -837,8 +837,8 @@ class _TzCache:
         except _pd.errors.EmptyDataError:
             _os.remove(old_cache_file_path)
         else:
-            df = df[~df["Tz"].isna()]
-            df = df[~df["Tz"]=='']
+            df = df[~df["Tz"].isna().to_numpy()]
+            df = df[~(df["Tz"]=='').to_numpy()]
             if not df.empty:
                 try:
                     self.tz_db.bulk_set(df.to_dict()['Tz'])
