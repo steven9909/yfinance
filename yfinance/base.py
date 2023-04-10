@@ -212,7 +212,8 @@ class TickerBase:
                                    "the issue. Thank you for your patience.")
 
             data = data.json()
-        except Exception:
+        except Exception as e:
+            print(e)
             pass
 
         # Store the meta data that gets retrieved simultaneously
